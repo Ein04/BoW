@@ -1,6 +1,10 @@
  #Starter code prepared by Borna Ghotbi for computer vision
  #based on MATLAB code by James Hay
 
+from sklearn import svm
+import numpy as np 
+from sklearn.neighbors import KNeighborsClassifier
+
 '''This function will predict the category for every test image by finding
 the training image with most similar features. Instead of 1 nearest
 neighbor, you can vote based on k nearest neighbors which will increase
@@ -27,6 +31,8 @@ def nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats)
     	# You can use knn from sci-kit learn.
         # Reference: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html
     '''
+
+
     return predicted_labels
 
 

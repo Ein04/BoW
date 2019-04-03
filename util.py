@@ -2,6 +2,8 @@ import numpy as np
 import os
 import glob
 from sklearn.cluster import KMeans
+# additional library for histogram display
+import matplotlib.pyplot as plt
 
 def build_vocabulary(image_paths, vocab_size):
     """ Sample SIFT descriptors, cluster them using k-means, and return the fitted k-means model.
@@ -34,12 +36,17 @@ def build_vocabulary(image_paths, vocab_size):
         sift_descriptors = features[:, 2:]
 
         # TODO: Randomly sample n_each descriptors from sift_descriptor and store them into descriptors
+        indices = np.random.choice(sift_descriptors.shape[0], size=min(n_each,sift_descriptors.shape[0]), replace=False)
+        descriptors[i*n_each:(i+1)*n_each] = sift_descriptors[indices]
+        # for j, idc in enumerate(indices):
+        #     descriptors[i*n_each+j] = sift_descriptors[idc] 
 
     # TODO: pefrom k-means clustering to cluster sampled sift descriptors into vocab_size regions.
     # You can use KMeans from sci-kit learn.
     # Reference: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
+    km = KMeans(n_clusters=vocab_size).fit(descriptors)
     
-    return kmeans
+    return km
     
 def get_bags_of_sifts(image_paths, kmeans):
     """ Represent each image as bags of SIFT features histogram.
@@ -65,10 +72,56 @@ def get_bags_of_sifts(image_paths, kmeans):
         # TODO: Assign each feature to the closest cluster center
         # Again, each feature consists of the (x, y) location and the 128-dimensional sift descriptor
         # You can access the sift descriptors part by features[:, 2:]
+        sift_descriptors = features[:, 2:]
+        image_feats[i] += np.bincount(kmeans.predict(sift_descriptors),minlength=200)
+
+        # for descriptor in sift_descriptors:
+        #     contribute = kmeans.predict([descriptor])
+        #     image_feats[i][contribute] += 1
 
         # TODO: Build a histogram normalized by the number of descriptors
+        image_feats[i] /= np.sum(image_feats[i,:])
+        #print(image_feats[0])
 
     return image_feats
+
+def show_avg_histogram(labels, image_feats, bags):
+    """ Plot the average histogram
+
+    Parameters
+    ----------
+    labels: an n_image length array of class labels corresponding to each image
+    image_feats: an (n_image, vocab_size) matrix, where each row is a histogram.
+    bags: an 15 length array storing the string names for labels in sequence
+
+    Return
+    ----------
+    bags: an array of 15 labels
+    avg_histogram: an (15, vocab_size) matrix with avegra
+
+    """
+    # Initialize an (labels.size, vocab_size) matrix to store the average histogram
+    avg_histogram = np.zeros((15, image_feats.shape[1]))
+    # Initialize an bag dictionary 
+    # with the indices of image with certain label 
+    # and the size of bag for each label for later averaging use [1]
+    bags, sizes = np.unique(labels, return_counts=True)
+    for i,label in enumerate(labels):
+        index = np.where(bags==label)
+        avg_histogram[index] += image_feats[i]
+
+    # average the whole histogram according to the sizes
+    for i in range(15):
+        avg_histogram[i] /= sizes[i]
+
+    # plot the diagram
+    for i in range(15):
+        plt.bar(np.arange(len(avg_histogram[i])), avg_histogram[i])
+        plt.title('Average historgram for Category: ' + str(bags[i]))
+        plt.savefig(('avg_histogram_' + str(bags[i])) + '.png', format='png', dpi=300)
+        plt.show()
+        
+
 
 def load(ds_path):
     """ Load from the training/testing dataset.
@@ -101,7 +154,9 @@ def load(ds_path):
     image_paths = image_paths[idx]
     labels = labels[idx]
 
-    return image_paths, labels
+    # get the list of names
+    bags = map(lambda x: x.split('/')[2], classes)
+    return image_paths, labels, bags
 
 
 if __name__ == "__main__":
