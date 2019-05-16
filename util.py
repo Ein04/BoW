@@ -4,6 +4,7 @@ import glob
 from sklearn.cluster import KMeans
 # additional library for histogram display
 import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
 
 def build_vocabulary(image_paths, vocab_size):
     """ Sample SIFT descriptors, cluster them using k-means, and return the fitted k-means model.
@@ -85,7 +86,7 @@ def get_bags_of_sifts(image_paths, kmeans):
 
     return image_feats
 
-def show_avg_histogram(labels, image_feats, bags):
+def show_avg_histogram(labels, image_feats, categories):
     """ Plot the average histogram
 
     Parameters
@@ -117,8 +118,8 @@ def show_avg_histogram(labels, image_feats, bags):
     # plot the diagram
     for i in range(15):
         plt.bar(np.arange(len(avg_histogram[i])), avg_histogram[i])
-        plt.title('Average historgram for Category: ' + str(bags[i]))
-        plt.savefig(('avg_histogram_' + str(bags[i])) + '.png', format='png', dpi=300)
+        plt.title('Average historgram for Category: ' + str(categories[i]))
+        plt.savefig(('average histograms/avg_histogram_' + str(categories[i])) + '.png', format='png')
         plt.show()
         
 
@@ -155,8 +156,86 @@ def load(ds_path):
     labels = labels[idx]
 
     # get the list of names
-    bags = map(lambda x: x.split('/')[2], classes)
+    bags = list(map(lambda x: x.split('/')[2], classes))
     return image_paths, labels, bags
+
+
+def plot_confusion_matrix(y_true, y_pred, normalize=False, title=None, categories=None):
+    '''
+    Parameters:
+        ---------
+        y_true: the true labels
+        y_pred: the predicted labels
+        normalizw: a boolean that speficies whether the matrix is normalized
+        title: the title of the matrix img
+        categories: a list of labels' names
+
+    Return:
+        ------
+
+    This function return a plot of confusion matrix, with or without normalization
+
+    Code from:
+    https://scikit-learn.org/stable/auto_examples/model_selection/plot_confusion_matrix.html#sphx-glr-auto-examples-model-selection-plot-confusion-matrix-py
+    '''
+
+    if not title:
+        if normalize:
+            title = 'Normalized confusion matrix'
+        else:
+            title = 'Confusion matrix without normalization'
+
+    # Compute confusion matrix
+    cm = confusion_matrix(y_true, y_pred)
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    accuracy = sum(cm.diagonal())/cm.sum()
+
+    fig, ax = plt.subplots()
+    im = ax.imshow(cm, interpolation='nearest')
+    ax.figure.colorbar(im, ax=ax)
+    # We want to show all ticks...
+    ax.set(xticks=np.arange(cm.shape[1]),
+           yticks=np.arange(cm.shape[0]),
+           # ... and label them with the respective list entries
+           xticklabels=categories, yticklabels=categories,
+           title=title+' with accuracy: ' +str(accuracy),
+           ylabel='True label',
+           xlabel='Predicted label')
+
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+
+
+    # Loop over data dimensions and create text annotations.
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            ax.text(j, i, format(cm[i, j], fmt),
+                    ha="center", va="center",
+                    color="white" if cm[i, j] > thresh else "black")
+    fig.tight_layout()
+
+    plt.savefig(title, format="png", dpi=300)
+    plt.show()
+
+
+    return ax
+
+        
+
+
+
+
+
 
 
 if __name__ == "__main__":

@@ -4,6 +4,8 @@
 from sklearn import svm
 import numpy as np 
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.multiclass import OneVsRestClassifier
+
 
 '''This function will predict the category for every test image by finding
 the training image with most similar features. Instead of 1 nearest
@@ -31,8 +33,15 @@ def nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats)
     	# You can use knn from sci-kit learn.
         # Reference: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html
     '''
-
-
+    # define value for k 
+    k = 3
+    # Use kneighborsClassdifier to fit the classifier
+    kNN = KNeighborsClassifier(n_neighbors=k)
+    kNN.fit(train_image_feats, train_labels)
+    predicted_labels = kNN.predict(test_image_feats)
+    print(test_image_feats.shape)
+    print(predicted_labels)
+    print(predicted_labels.shape)
     return predicted_labels
 
 
@@ -66,5 +75,13 @@ def svm_classify(train_image_feats, train_labels, test_image_feats):
         # Reference: https://scikit-learn.org/stable/modules/svm.html
 
     '''
+    svm_classifier = OneVsRestClassifier(svm.SVC(C=100, kernel="linear", probability=True))
+    svm_classifier.fit(train_image_feats, train_labels)
+    predicted_labels = svm_classifier.predict(test_image_feats)
     return predicted_labels
+
+
+
+
+
 

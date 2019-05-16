@@ -4,7 +4,7 @@
 #based on a MATLAB code by James Hays and Sam Birch 
 
 import numpy as np
-from util import load, build_vocabulary, get_bags_of_sifts, show_avg_histogram
+from util import load, build_vocabulary, get_bags_of_sifts, show_avg_histogram, plot_confusion_matrix
 from classifiers import nearest_neighbor_classify, svm_classify
 
 #For this assignment, you will need to report performance for sift features on two different classifiers:
@@ -21,6 +21,9 @@ print('Getting paths and labels for all train and test data\n')
 train_image_paths, train_labels, train_bags = load("sift/train")
 test_image_paths, test_labels, test_bags= load("sift/test")
 
+print(train_bags)
+print(test_bags)
+
 ''' Step 1: Represent each image with the appropriate feature
  Each function to construct features should return an N x d matrix, where
  N is the number of paths passed to the function and d is the 
@@ -36,16 +39,18 @@ print("vocab built")
 train_image_feats = get_bags_of_sifts(train_image_paths, kmeans)
 test_image_feats = get_bags_of_sifts(test_image_paths, kmeans)
 
-np.save('train_image_feats', train_image_feats)
-np.save('train_image_feats', test_image_feats)
+# np.save('train_image_feats', train_image_feats)
+# np.save('test_image_feats', test_image_feats)
 
+# train_image_feats = np.load('train_image_feats.npy')
+# test_image_feats = np.load('test_image_feats.npy')
 
 print('features extracted')
         
 #If you want to avoid recomputing the features while debugging the
 #classifiers, you can either 'save' and 'load' the extracted features
 #to/from a file.
-show_avg_histogram(train_labels,train_image_feats)
+show_avg_histogram(train_labels,train_image_feats,train_bags)
 
 
 
@@ -58,14 +63,14 @@ show_avg_histogram(train_labels,train_image_feats)
 
 print('Using nearest neighbor classifier to predict test set categories\n')
 #TODO: YOU CODE nearest_neighbor_classify function from classifers.py
-pred_labels_knn = nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats)
+#pred_labels_knn = nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats)
+#plot_confusion_matrix(test_labels, pred_labels_knn, normalize=False, title='Unnormalized knn CM', categories=test_bags)
   
 
 print('Using support vector machine to predict test set categories\n')
 #TODO: YOU CODE svm_classify function from classifers.py
 pred_labels_svm = svm_classify(train_image_feats, train_labels, test_image_feats)
-
-
+  
 
 print('---Evaluation---\n')
 # Step 3: Build a confusion matrix and score the recognition system for 
@@ -76,6 +81,9 @@ print('---Evaluation---\n')
 # 2) Build a Confusion matrix and visualize it. 
 #   You will need to convert the one-hot format labels back
 #   to their category name format.
+
+# NOTE: Evaluation function in the util.py
+plot_confusion_matrix(test_labels, pred_labels_svm, normalize=False, title='Unnormalized SVM CM', categories=test_bags)
 
 
 # Interpreting your performance with 100 training examples per category:
